@@ -47,9 +47,19 @@ defmodule Vayne.Metric.Mongodb do
     opcountersRepl
     backgroundFlushing
   )
+
+  defp wrap_command(conn, params) do
+    try do
+      Mongo.command(conn, params)
+    rescue
+      e in DBConnection.ConnectionError -> 
+        {:error, "connection error with params: #{inspect params}"}
+    end
+  end
+
   def run({conn, role}, log_func) do
 
-    case Mongo.command(conn, %{serverStatus: 1}) do
+    case wrap_command(conn, %{serverStatus: 1}) do
       {:ok, hash} ->
         info_normal = Enum.reduce(@normal_info_tag, %{}, fn (key, acc) ->
           info = get_normal_info(hash[key], key)
@@ -103,7 +113,7 @@ defmodule Vayne.Metric.Mongodb do
   end
 
   defp get_repl_metrics({conn, role}, log_func, me) do
-    case Mongo.command(conn, %{replSetGetStatus: 1}) do
+    case wrap_command(conn, %{replSetGetStatus: 1}) do
       {:error, error} ->
         log_func.(error)
         %{}

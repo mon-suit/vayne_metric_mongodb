@@ -56,7 +56,7 @@ defmodule Vayne.Metric.MongodbTest do
       Vayne.Task.test_task(task)
     end)
 
-    assert {:error, _} = Task.await(async, :infinity)
+    assert {:ok, %{"mongo.alive" => 0}} = Task.await(async, :infinity)
   end
 
 
